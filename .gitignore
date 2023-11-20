@@ -139,6 +139,7 @@ dist
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+.vscode
 
 # Local History for Visual Studio Code
 .history/
@@ -147,6 +148,9 @@ dist
 # Ignore all local history of files
 .history
 .ionide
+
+# Exclude all subfolders
+*/
 
 # Support for Project snippet scope
 !.vscode/*.code-snippets

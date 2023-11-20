@@ -1,33 +1,90 @@
 const setup = require('./setup')
 const sync = require('./sync')
 const nconf = require('nconf')
+const api = require('@actual-app/api');
+const {
+  initialize,
+} = require("./setup.js");
 
 nconf.argv().env().file({ file: './config.json' })
+
+let actualInstance
 
 async function run () {
   let token = nconf.get('simpleFIN:token')
   let accessKey = nconf.get('simpleFIN:accessKey')
   let budgetId = nconf.get('actual:budgetId')
+  let budgetEncryption = nconf.get('actual:budgetEncryption') || ''
+  let serverUrl = nconf.get('actual:serverUrl') || ''
+  let serverPassword = nconf.get('actual:serverPassword') || ''
+  let serverValidated = nconf.get('actual:serverValidated') || ''
   let linkedAccounts = nconf.get('linkedAccounts') || []
 
-  const setupRequired = !!nconf.get('setup') || !accessKey || !budgetId
+  const setupRequired = !!nconf.get('setup') || !accessKey || !budgetId || !serverUrl || !serverPassword || !serverValidated
   const linkRequired = setupRequired || !!nconf.get('link') || !linkedAccounts
 
   if (setupRequired) {
-    const initialSetup = await setup.initialSetup(token, accessKey, budgetId)
+    const initialSetup = await setup.initialSetup(token, accessKey, budgetId, budgetEncryption, serverUrl, serverPassword)
 
     token = initialSetup.token
     accessKey = initialSetup.accessKey
     budgetId = initialSetup.budgetId
+    budgetEncryption = initialSetup.budgetEncryption
+    serverUrl = initialSetup.serverUrl
+    serverPassword = initialSetup.serverPassword
 
     nconf.set('simpleFIN:token', token)
     nconf.set('simpleFIN:accessKey', accessKey)
     nconf.set('actual:budgetId', budgetId)
-    nconf.save()
+    nconf.set('actual:budgetEncryption', budgetEncryption)
+    nconf.set('actual:serverUrl', serverUrl)
+    nconf.set('actual:serverPassword', serverPassword)
+
+    await nconf.save()
+
+    actualConfig = {
+      budgetId: budgetId,
+      budgetEncryption: budgetEncryption,
+      serverUrl: serverUrl,
+      serverPassword: serverPassword
+    }
+
+    if (!actualInstance) {
+      actualInstance = await initialize(actualConfig);
+    }
+
+
+    console.log('Budget: ', budgetId);
+
+    await actualInstance.downloadBudget(budgetId, {password: budgetEncryption});
+
+    accounts = await actualInstance.getAccounts();
+
+    if(accounts.length <= 0) {
+
+      throw new Error('Be sure that your Actual Budget URL and Server are set correctly, that your Budget has at least one created Account. ');
+
+    }
+
+    nconf.set('actual:serverValidated', 'yes')
+
+    await nconf.save()
+   
   }
 
   if (linkRequired) {
-    linkedAccounts = await setup.accountSetup(accessKey, budgetId, linkedAccounts, linkRequired)
+    actualConfig = {
+      budgetId: budgetId,
+      budgetEncryption: budgetEncryption,
+      serverUrl: serverUrl,
+      serverPassword: serverPassword
+    }
+
+    if (!actualInstance) {
+      actualInstance = await initialize(actualConfig);
+    }
+
+    linkedAccounts = await setup.accountSetup(accessKey, actualInstance, linkedAccounts, linkRequired)
     nconf.set('linkedAccounts', linkedAccounts)
     nconf.save()
   }
@@ -38,10 +95,12 @@ async function run () {
     startDate = new Date(lastSync)
     startDate.setDate(startDate.getDate() - 5)
   }
-  await sync.run(accessKey, budgetId, linkedAccounts, startDate)
+  await sync.run(accessKey, budgetId, budgetEncryption, linkedAccounts, startDate, serverUrl, serverPassword)
   nconf.set('lastSync', new Date().toDateString())
   nconf.save()
   console.log('Complete')
+  process.exit()
+
 }
 
 run()

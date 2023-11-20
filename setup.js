@@ -5,6 +5,9 @@ const api = require('@actual-app/api');
 let _token
 let _accessKey
 let _budgetId
+let _budgetEncryption
+let _serverUrl
+let _serverPassword
 
 console.log('Inquirer, SimpleFIN and API modules loaded.');
 
@@ -35,25 +38,30 @@ const prompts = [
   },
   {
     type: 'input',
+    name: 'serverUrl',
+    default: () => getServerUrl(),
+    message: 'Enter your ActualBudget Server URL:',
+  },
+  {
+    type: 'input',
+    name: 'serverPassword',
+    default: () => getServerPassword(),
+    message: 'Enter your ActualBudget Server Password:',
+
+  },
+  {
+    type: 'input',
     name: 'budgetId',
-    message: 'Enter your ActualBudget Budget ID:',
     default: () => getBudgetId(),
-    validate: async (i) => {
-      console.log('Budget: ', i);
-      const budget = await api.loadBudget(i);
-      console.log('Calling Budget');
-      return await api.getAccounts(budget).length > 0;
-      console.log('Calling Accounts');
-    }
+    message: 'Enter your ActualBudget Sync ID:'
+  },
+  {
+    type: 'input',
+    name: 'budgetEncryption',
+    default: () => getBudgetEncryption(),
+    message: 'Enter your ActualBudget Budget Encryption Password (leave blank if not encrypted):'
   }
 ]
-
-async function loadAccounts() {
-  console.log('About to load accounts.');
-  const accounts = await api.getAccounts();
-  console.log('Accounts loaded: ', accounts);
-  return accounts;
-}
 
 function getChoices (answers, accounts) {
   const ret = accounts.filter(f => !Object.values(answers).find(a => a === f.id)).map(a => {
@@ -85,26 +93,41 @@ function getAccessKey () {
   return _accessKey
 }
 
+function getServerPassword () {
+  return _serverPassword
+}
+
+function getServerUrl () {
+  return _serverUrl
+}
+
 function getBudgetId () {
   return _budgetId
 }
 
-async function initialSetup(token, accessKey, budgetId) {
+function getBudgetEncryption () {
+  return _budgetEncryption
+}
+
+async function initialSetup(token, accessKey, budgetId, budgetEncryption, serverUrl, serverPassword) {
   console.log('Initiating setup...');
   _token = token;
   _accessKey = accessKey;
   _budgetId = budgetId;
+  _budgetEncryption = budgetEncryption;
+  _serverUrl = serverUrl;
+  _serverPassword = serverPassword;
   console.log('Prompting user for input...');
   const initialSetup = await inquirer.prompt(prompts);
   console.log('User input received: ', initialSetup);
   return initialSetup;
 }
 
-async function accountSetup (accessKey, budgetId, linkedAccounts, reLinkAccounts) {
+async function accountSetup(accessKey, actualInstance, linkedAccounts, reLinkAccounts) {
   console.log('Starting account setup...');
   const simpleFINAccounts = await simpleFIN.getAccounts(accessKey)
   console.log('SimpleFIN Accounts: ', simpleFINAccounts);
-  const accounts = (await api.loadBudget(budgetId).then.api.getAccounts()).filter(f => !!reLinkAccounts || !Object.values(linkedAccounts || {}).find(a => a === f.id))
+  const accounts = (await actualInstance.getAccounts()).filter(f => !!reLinkAccounts || !Object.values(linkedAccounts || {}).find(a => a === f.id))
   console.log('ActualBudget accounts: ', accounts);
   const accountLinkPrompts = simpleFINAccounts.accounts.filter(f => !!reLinkAccounts || !linkedAccounts[f.id]).map(s => {
     return {
@@ -122,6 +145,54 @@ async function accountSetup (accessKey, budgetId, linkedAccounts, reLinkAccounts
   return nullsRemoved
 }
 
+async function initialize(config = [], overwriteExistingConfig = true) {
+  if (!_serverUrl || overwriteExistingConfig) {
+    if(config.serverUrl) {
+      _serverUrl = config.serverUrl;
+      console.log('Updated Actual Config: serverUrl')
+    } else {
+      throw new Error('Actual Budget Error: serverUrl is required');
+    }
+  }
+  if (!_serverPassword || overwriteExistingConfig) {
+    if(config.serverPassword) {
+      _serverPassword = config.serverPassword;
+      console.log('Updated Actual Config: serverPassword')
+    } else {
+      throw new Error('Actual Budget Error: serverPassword is required');
+    }
+  }
+  if (!_budgetId || overwriteExistingConfig) {
+    if(config.budgetId) {
+      _budgetId = config.budgetId;
+      console.log('Updated Actual Config: budgetId')
+    } else {
+      throw new Error('Actual Budget Error: budgetId is required');
+    }
+  }
+  if (!_budgetEncryption || overwriteExistingConfig) {
+    _budgetEncryption = config.budgetEncryption
+    console.log('Updated Actual Config: budgetEncryption')
+  }
+
+  console.log('Initializing Actual Budget...');
+  try {
+    await api.init({
+      serverURL: actualConfig.serverUrl || _serverUrl,
+      password: actualConfig.serverPassword || _serverPassword,
+    });
+
+    let id = actualConfig.budgetId || _budgetId;
+    let budgetEncryption = actualConfig.budgetEncryption || _budgetEncryption;
+
+    await api.downloadBudget(id,  {password: budgetEncryption});
+  } catch (e) {
+    throw new Error(`Actual Budget Error: ${e.message}`);
+  }
+  console.log('Actual Budget initialized.');
+  return api;
+}
+
 console.log('Setup module loaded.');
 
-module.exports = { initialSetup, accountSetup }
+module.exports = { initialSetup, accountSetup, initialize }
