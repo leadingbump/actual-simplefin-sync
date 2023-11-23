@@ -38,19 +38,19 @@ const prompts = [
     message: 'Enter your SimpleFIN Token (https://beta-bridge.simplefin.org/):',
     default: () => getToken(),
     validate: async (input, answers) => {
-      console.log(`Validating token: ${input}`);
+      log(`Validating token: ${input}`);
       if (input !== getToken()) {
         try {
-          console.log(`[SETUP] Calling getAccessKey with token: ${input}`);
+          log(`[SETUP] Calling getAccessKey with token: ${input}`);
           answers.accessKey = await simpleFIN.getAccessKey(input);
-          console.log(`Retrieved access key: ${answers.accessKey}`);
+          log(`Retrieved access key: ${answers.accessKey}`);
         } catch (e) {
           console.error(`Invalid Token: ${input}, Error: ${e.message}`);
           return `Invalid Token: ${input}`;
         }
       } else {
         answers.accessKey = await simpleFIN.getAccessKey(input);
-        console.log(`Using existing access key: ${answers.accessKey}`);
+        log(`Using existing access key: ${answers.accessKey}`);
       }
       return true;
     }
