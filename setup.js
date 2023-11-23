@@ -140,6 +140,9 @@ async function accountSetup(accessKey, actualInstance, linkedAccounts, reLinkAcc
     }
   })
   const accountLinks = await inquirer.prompt(accountLinkPrompts)
+  
+  await actualInstance.shutdown()
+  
   Object.assign(linkedAccounts, accountLinks)
   const nullsRemoved = Object.fromEntries(Object.entries(linkedAccounts).filter(([_, v]) => v != null))
   return nullsRemoved
@@ -176,8 +179,18 @@ async function initialize(config = [], overwriteExistingConfig = true) {
   }
 
   console.log('Initializing Actual Budget...');
+
+  const { mkdir } = require('fs').promises;
+
+  budgetspath = __dirname+'/budgets'
+
+  try {
+    await mkdir(budgetspath);
+  } catch (e) {}
+
   try {
     await api.init({
+      dataDir: budgetspath,
       serverURL: actualConfig.serverUrl || _serverUrl,
       password: actualConfig.serverPassword || _serverPassword,
     });

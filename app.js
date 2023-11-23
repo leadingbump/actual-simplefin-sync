@@ -2,6 +2,8 @@ const setup = require('./setup')
 const sync = require('./sync')
 const nconf = require('nconf')
 const api = require('@actual-app/api');
+const fsExtra = require('fs-extra');
+
 const {
   initialize,
 } = require("./setup.js");
@@ -88,6 +90,11 @@ async function run () {
     nconf.set('linkedAccounts', linkedAccounts)
     nconf.save()
   }
+
+  if(actualInstance) {
+    await actualInstance.shutdown()
+  }
+
   const lastSync = nconf.get('lastSync')
   let startDate
   if (lastSync) {
@@ -95,9 +102,17 @@ async function run () {
     startDate = new Date(lastSync)
     startDate.setDate(startDate.getDate() - 5)
   }
+
+  budgetspath = __dirname+'/budgets'
+  fsExtra.emptyDirSync(budgetspath);
+
   await sync.run(accessKey, budgetId, budgetEncryption, linkedAccounts, startDate, serverUrl, serverPassword)
   nconf.set('lastSync', new Date().toDateString())
   nconf.save()
+
+  console.log('Clearing temporary budget files.')
+  fsExtra.emptyDirSync(budgetspath);
+
   console.log('Complete')
   process.exit()
 
