@@ -29,7 +29,7 @@ const prompts = [
           return `Invalid Token: ${input}`;
         }
       } else {
-        answers.accessKey = getAccessKey();
+        answers.accessKey = await simpleFIN.getAccessKey(input);
         console.log(`Using existing access key: ${answers.accessKey}`);
       }
       return true;
