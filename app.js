@@ -8,6 +8,17 @@ const {
   initialize,
 } = require("./setup.js");
 
+const logLevels = {
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error'
+};
+
+function log(level, message) {
+  console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}`);
+}
+
 nconf.argv().env().file({ file: './config.json' })
 
 let actualInstance
