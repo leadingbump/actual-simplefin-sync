@@ -1,4 +1,8 @@
 const https = require('https')
+const fs = require('fs');
+
+// Path for the log file
+const logFilePath = 'simplefin.log';
 
 const logLevels = {
   DEBUG: 'debug',
@@ -8,7 +12,12 @@ const logLevels = {
 };
 
 function log(level, message) {
-  console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}`);
+  const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}\n`;
+  fs.appendFile(logFilePath, logMessage, (err) => {
+    if (err) {
+      console.error(`Failed to write to log: ${err}`);
+    }
+  });
 }
 
 function parseAccessKey(accessKey) {
