@@ -17,17 +17,21 @@ const prompts = [
     name: 'token',
     message: 'Enter your SimpleFIN Token (https://beta-bridge.simplefin.org/):',
     default: () => getToken(),
-    validate: async (i, a) => {
-      if (i !== getToken()) {
+    validate: async (input, answers) => {
+      console.log(`Validating token: ${input}`);
+      if (input !== getToken()) {
         try {
-          a.accessKey = await simpleFIN.getAccessKey(i)
+          answers.accessKey = await simpleFIN.getAccessKey(input);
+          console.log(`Retrieved access key: ${answers.accessKey}`);
         } catch (e) {
-          return `Invalid Token: ${i}`
+          console.error(`Invalid Token: ${input}, Error: ${e.message}`);
+          return `Invalid Token: ${input}`;
         }
       } else {
-        a.accessKey = getAccessKey()
+        answers.accessKey = getAccessKey();
+        console.log(`Using existing access key: ${answers.accessKey}`);
       }
-      return true
+      return true;
     }
   },
   {
@@ -118,6 +122,7 @@ async function initialSetup(token, accessKey, budgetId, budgetEncryption, server
   _serverUrl = serverUrl;
   _serverPassword = serverPassword;
   console.log('Prompting user for input...');
+  console.log('Current token and accessKey:', { token: _token, accessKey: _accessKey });
   const initialSetup = await inquirer.prompt(prompts);
   console.log('User input received: ', initialSetup);
   return initialSetup;
