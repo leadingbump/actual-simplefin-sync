@@ -11,32 +11,32 @@ function log(level, message) {
   console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}`);
 }
 
-function parseAccessKey(accessKey) {
+async function parseAccessKey(accessKey, isRetry = false) {
   try {
     log(logLevels.DEBUG, `Parsing access key: ${accessKey}`);
-    if (!accessKey.includes('//')) {
-      throw new Error('Invalid access key format');
-    }
-
     let [scheme, rest] = accessKey.split('//');
-    if (!rest || !rest.includes('@')) {
-      throw new Error('Invalid access key format');
-    }
-
     let [auth, baseUrl] = rest.split('@');
     let [username, password] = auth.split(':');
-    if (!username || !password) {
-      throw new Error('Invalid access key format');
-    }
-
     baseUrl = `${scheme}//${baseUrl}`;
     return { baseUrl, username, password };
   } catch (error) {
     log(logLevels.ERROR, `Error parsing access key: ${error.message}`);
-    throw error; // Rethrow the error after logging
+
+    if (!isRetry) {
+      log(logLevels.INFO, 'Retrying to fetch access key');
+      try {
+        // Assuming getAccessKey is an async function that returns the access key
+        const newAccessKey = await getAccessKey(base64Token);
+        return parseAccessKey(newAccessKey, true); // Recursive call with the new access key and retry flag set to true
+      } catch (retryError) {
+        log(logLevels.ERROR, `Error fetching access key on retry: ${retryError.message}`);
+        throw retryError; // If retry also fails, throw the error
+      }
+    } else {
+      throw error; // If this was already a retry, throw the original error
+    }
   }
 }
-
 
 async function getAccessKey(base64Token) {
   try {
