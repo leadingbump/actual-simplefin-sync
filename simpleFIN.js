@@ -26,7 +26,7 @@ async function parseAccessKey(accessKey, isRetry = false) {
       log(logLevels.INFO, 'Retrying to fetch access key');
       try {
         // Assuming getAccessKey is an async function that returns the access key
-        const newAccessKey = await getAccessKey(base64Token);
+        const newAccessKey = await getAccessKey(token);
         return parseAccessKey(newAccessKey, true); // Recursive call with the new access key and retry flag set to true
       } catch (retryError) {
         log(logLevels.ERROR, `Error fetching access key on retry: ${retryError.message}`);
