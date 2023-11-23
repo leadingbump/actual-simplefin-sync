@@ -14,9 +14,21 @@ function log(level, message) {
 function parseAccessKey(accessKey) {
   try {
     log(logLevels.DEBUG, `Parsing access key: ${accessKey}`);
+    if (!accessKey.includes('//')) {
+      throw new Error('Invalid access key format');
+    }
+
     let [scheme, rest] = accessKey.split('//');
+    if (!rest || !rest.includes('@')) {
+      throw new Error('Invalid access key format');
+    }
+
     let [auth, baseUrl] = rest.split('@');
     let [username, password] = auth.split(':');
+    if (!username || !password) {
+      throw new Error('Invalid access key format');
+    }
+
     baseUrl = `${scheme}//${baseUrl}`;
     return { baseUrl, username, password };
   } catch (error) {
@@ -24,6 +36,7 @@ function parseAccessKey(accessKey) {
     throw error; // Rethrow the error after logging
   }
 }
+
 
 async function getAccessKey(base64Token) {
   try {
