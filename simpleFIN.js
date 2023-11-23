@@ -40,12 +40,17 @@ function parseAccessKey(accessKey) {
 
 async function getAccessKey(base64Token) {
   try {
-    log(logLevels.INFO, 'Requesting access key');
+    log(logLevels.INFO, `[SIMPLEFIN] Requesting access key with token: ${base64Token}`);
     const token = Buffer.from(base64Token, 'base64').toString();
+    log(logLevels.DEBUG, `[SIMPLEFIN] Decoded token URL: ${token}`);
     const options = { method: 'POST', port: 443, headers: { 'Content-Length': 0 } };
     return new Promise((resolve, reject) => {
       const req = https.request(new URL(token), options, (res) => {
-        res.on('data', (d) => resolve(d.toString()));
+        res.on('data', (d) => {
+          const accessKey = d.toString();
+          log(logLevels.DEBUG, `[SIMPLEFIN] Received access key data: ${accessKey}`);
+          resolve(accessKey);
+        });
       });
       req.on('error', (e) => {
         log(logLevels.ERROR, `Request error: ${e.message}`);
