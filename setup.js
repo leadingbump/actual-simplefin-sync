@@ -1,6 +1,26 @@
 const inquirer = require('inquirer')
 const simpleFIN = require('./simpleFIN')
 const api = require('@actual-app/api');
+const fs = require('fs');
+
+// Path for the log file
+const logFilePath = 'setup.log';
+
+const logLevels = {
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error'
+};
+
+function log(level, message) {
+  const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}\n`;
+  fs.appendFile(logFilePath, logMessage, (err) => {
+    if (err) {
+      console.error(`Failed to write to log: ${err}`);
+    }
+  });
+}
 
 let _token
 let _accessKey
