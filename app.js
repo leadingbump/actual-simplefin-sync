@@ -14,7 +14,9 @@ let actualInstance
 
 async function run () {
   let token = nconf.get('simpleFIN:token')
+  log(logLevels.DEBUG, `token: ${token}`)
   let accessKey = nconf.get('simpleFIN:accessKey')
+  log(logLevels.DEBUG, `accessKey: ${accessKey}`)
   let budgetId = nconf.get('actual:budgetId')
   let budgetEncryption = nconf.get('actual:budgetEncryption') || ''
   let serverUrl = nconf.get('actual:serverUrl') || ''
