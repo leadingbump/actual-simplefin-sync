@@ -21,6 +21,7 @@ const prompts = [
       console.log(`Validating token: ${input}`);
       if (input !== getToken()) {
         try {
+          console.log(`[SETUP] Calling getAccessKey with token: ${input}`);
           answers.accessKey = await simpleFIN.getAccessKey(input);
           console.log(`Retrieved access key: ${answers.accessKey}`);
         } catch (e) {
