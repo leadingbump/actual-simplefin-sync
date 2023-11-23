@@ -101,7 +101,7 @@ async function getAccounts(accessKey, startDate, endDate) {
       req.end()
     })
   }
-  } catch (error) {
+  catch (error) {
     log(logLevels.ERROR, `Error fetching accounts: ${error.message}`);
     throw error;
   }
