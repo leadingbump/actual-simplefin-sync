@@ -19,7 +19,8 @@ function log(level, message) {
   console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}`);
 }
 
-nconf.argv().env().file({ file: './config.json' })
+const configFile = nconf.get('configFile') || './config.json';
+nconf.argv().env().file({ file: configFile });
 
 let actualInstance
 
