@@ -19,8 +19,25 @@ function log(level, message) {
   console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}]: ${message}`);
 }
 
-const configFile = nconf.get('configFile') || './config.json';
-nconf.argv().env().file({ file: configFile });
+// Define a constant for the command line argument name
+const configFileArg = 'configFile';
+
+// Setup nconf to use (in order): command-line arguments, environment variables
+nconf.argv({
+  [configFileArg]: {
+    describe: 'Path to the configuration file',
+    type: 'string'
+  }
+}).env();
+
+// Retrieve the custom configuration file path using the constant
+const customConfigPath = nconf.get(configFileArg);
+
+// Use the custom config file if provided, otherwise default to './config.json'
+const configFilePath = customConfigPath || './config.json';
+
+// Load the configuration file specified by configFilePath
+nconf.file({ file: configFilePath });
 
 let actualInstance
 
