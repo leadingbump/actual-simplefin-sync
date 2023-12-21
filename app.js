@@ -32,6 +32,7 @@ async function run () {
   let budgetEncryption = nconf.get('actual:budgetEncryption') || ''
   let serverUrl = nconf.get('actual:serverUrl') || ''
   let serverPassword = nconf.get('actual:serverPassword') || ''
+  let sendNotes = nconf.get('actual:sendNotes') || ''
   let serverValidated = nconf.get('actual:serverValidated') || ''
   let linkedAccounts = nconf.get('linkedAccounts') || []
 
@@ -47,6 +48,7 @@ async function run () {
     budgetEncryption = initialSetup.budgetEncryption
     serverUrl = initialSetup.serverUrl
     serverPassword = initialSetup.serverPassword
+    sendNotes = initialSetup.sendNotes
 
     nconf.set('simpleFIN:token', token)
     nconf.set('simpleFIN:accessKey', accessKey)
@@ -54,6 +56,7 @@ async function run () {
     nconf.set('actual:budgetEncryption', budgetEncryption)
     nconf.set('actual:serverUrl', serverUrl)
     nconf.set('actual:serverPassword', serverPassword)
+    nconf.set('actual:sendNotes', sendNotes)
 
     await nconf.save()
 
@@ -119,7 +122,7 @@ async function run () {
   budgetspath = __dirname+'/budgets'
   fsExtra.emptyDirSync(budgetspath);
 
-  await sync.run(accessKey, budgetId, budgetEncryption, linkedAccounts, startDate, serverUrl, serverPassword)
+  await sync.run(accessKey, budgetId, budgetEncryption, linkedAccounts, startDate, serverUrl, serverPassword, sendNotes)
   nconf.set('lastSync', new Date().toDateString())
   nconf.save()
 

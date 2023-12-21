@@ -28,6 +28,7 @@ let _budgetId
 let _budgetEncryption
 let _serverUrl
 let _serverPassword
+let _sendNotes
 
 console.log('Inquirer, SimpleFIN and API modules loaded.');
 
@@ -85,6 +86,12 @@ const prompts = [
     name: 'budgetEncryption',
     default: () => getBudgetEncryption(),
     message: 'Enter your ActualBudget Budget Encryption Password (leave blank if not encrypted):'
+  },
+  {
+    type: 'input',
+    name: 'sendNotes',
+    default: () => getSendNotes(),
+    message: 'Overwrite mapped account notes with date and balance from SimpleFin each run? (enter "yes" without quotes, to enable):'
   }
 ]
 
@@ -134,7 +141,11 @@ function getBudgetEncryption () {
   return _budgetEncryption
 }
 
-async function initialSetup(token, accessKey, budgetId, budgetEncryption, serverUrl, serverPassword) {
+function getSendNotes () {
+  return _sendNotes
+}
+
+async function initialSetup(token, accessKey, budgetId, budgetEncryption, serverUrl, serverPassword, sendNotes) {
   console.log('Initiating setup...');
   _token = token;
   _accessKey = accessKey;
@@ -142,6 +153,7 @@ async function initialSetup(token, accessKey, budgetId, budgetEncryption, server
   _budgetEncryption = budgetEncryption;
   _serverUrl = serverUrl;
   _serverPassword = serverPassword;
+  _sendNotes = sendNotes;
   console.log('Prompting user for input...');
   console.log('Current token and accessKey:', { token: _token, accessKey: _accessKey });
   const initialSetup = await inquirer.prompt(prompts);
@@ -202,6 +214,11 @@ async function initialize(config = [], overwriteExistingConfig = true) {
   if (!_budgetEncryption || overwriteExistingConfig) {
     _budgetEncryption = config.budgetEncryption
     console.log('Updated Actual Config: budgetEncryption')
+  }
+
+  if (!_sendNotes || overwriteExistingConfig) {
+    _sendNotes = config.sendNotes
+    console.log('Updated Actual Config: sendNotes')
   }
 
   console.log('Initializing Actual Budget...');
