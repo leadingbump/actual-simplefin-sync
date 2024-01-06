@@ -8,6 +8,9 @@ FROM nikolaik/python-nodejs:python$PYTHON_VERSION-nodejs${NODE_VERSION}-alpine a
 
 # Install make and other necessary build dependencies
 RUN apk add --no-cache make build-base
+RUN set -ex && apk --no-cache add sudo
+RUN apk --no-cache add nano
+
 
 # Set the working directory
 WORKDIR /usr/src/app
